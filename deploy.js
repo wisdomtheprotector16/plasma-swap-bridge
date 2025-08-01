@@ -45,15 +45,14 @@ async function main() {
     deployedContracts.oracle = oracle.address;
     console.log("✅ PlasmaOracle deployed to:", oracle.address);
 
-    // 2. Deploy StableSwap
+    // 2. Deploy StableSwap (no liquidity pool)
     console.log("\n💱 Deploying PlasmaStableSwap...");
     const PlasmaStableSwap = await ethers.getContractFactory("PlasmaStableSwap");
     const stableSwap = await upgrades.deployProxy(PlasmaStableSwap, [
       config.paymaster,
       oracle.address,
       config.guardian,
-      config.relayer,
-      ethers.constants.AddressZero // liquidityPool - to be set later
+      config.relayer
     ], {
       initializer: "initialize",
       kind: "uups"

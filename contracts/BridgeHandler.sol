@@ -11,21 +11,19 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title PlasmaBridgeHandler
- * @dev Production-ready cross-chain bridge handler optimized for Plasma blockchain
+ * @dev Simplified cross-chain bridge handler optimized for Plasma stablecoins
  * 
  * Key Features:
- * - Native Bitcoin bridge integration with trust-minimized design
+ * - Simple oracle-based stablecoin bridging (USDT, USDC, DAI)
  * - Zero-fee USD₮ transfers via Plasma's native paymaster system
- * - Multi-chain stablecoin bridging with automated fee adjustment
- * - Advanced security with rate limiting and fraud detection
- * - Millisecond timestamp precision for optimal throughput
- * - Emergency pause mechanisms and circuit breakers
- * - Support for custom gas tokens (USD₮, wBTC, etc.)
- * - MEV protection and front-running resistance
- * - Comprehensive audit trail and monitoring
+ * - Multi-chain support with minimal complexity
+ * - Rate limiting and basic security controls
+ * - Emergency pause mechanisms
+ * - Native Bitcoin bridge integration
+ * - Gasless transactions for supported stablecoins
  * 
  * @author Plasma Foundation
- * @notice This contract is designed specifically for Plasma's stablecoin-first architecture
+ * @notice Simplified for Plasma's stablecoin ecosystem without complex AMM dependencies
  */
 
 interface IPlasmaBridge {
@@ -245,8 +243,10 @@ contract PlasmaBridgeHandler is
         validChain(destinationChainId)
         rateLimited(msg.sender, amount)
     {
-        require(amount >= minBridgeAmount, "Amount too small");
-        require(amount <= maxBridgeAmount, "Amount too large");
+        uint256 tokenMin = tokenMinAmounts[token] > 0 ? tokenMinAmounts[token] : minBridgeAmount;
+        uint256 tokenMax = tokenMaxAmounts[token] > 0 ? tokenMaxAmounts[token] : maxBridgeAmount;
+        require(amount >= tokenMin, "Amount too small");
+        require(amount <= tokenMax, "Amount too large");
         require(recipient != address(0), "Invalid recipient");
         
         uint256 fee = (amount * bridgeFee) / FEE_DENOMINATOR;
@@ -255,14 +255,30 @@ contract PlasmaBridgeHandler is
         // Transfer tokens from user
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         
-        // Generate unique bridge ID
-        uint256 bridgeId = uint256(keccak256(abi.encodePacked(
-            msg.sender,
-            token,
-            amount,
-            destinationChainId,
-            block.timestamp
-        )));
+        // Increment bridge ID counter and use it as bridge ID
+        bridgeIdCounter++;
+        uint256 bridgeId = bridgeIdCounter;
+        
+        // Store bridge transaction
+        bridgeTransactions[bridgeId] = BridgeTransaction({
+            user: msg.sender,
+            token: token,
+            amount: amount,
+            recipient: recipient,
+            sourceChainId: block.chainid,
+            destinationChainId: destinationChainId,
+            timestamp: block.timestamp,
+            status: BridgeStatus.Pending,
+            confirmations: 0,
+            txHash: bytes32(0),
+            useGaslessTransfer: false
+        });
+        
+        // Add to user's bridge history
+        userBridges[msg.sender].push(bridgeId);
+        
+        // Update pending bridge count
+        pendingBridgeCount[msg.sender]++;
         
         // Approve and call bridge
         IERC20(token).safeApprove(plasmaBridge, bridgeAmount);
@@ -669,6 +685,15 @@ contract PlasmaBridgeHandler is
      */
     function setBitcoinBridge(address _bitcoinBridge) external onlyOwner {
         bitcoinBridge = _bitcoinBridge;
+    }
+    
+    /**
+     * @dev Set token as stablecoin
+     * @param token Token address
+     * @param isStable Whether token is a stable coin
+     */
+    function setStablecoin(address token, bool isStable) external onlyOwner {
+        stablecoins[token] = isStable;
     }
     
     /**

@@ -12,4 +12,9 @@ contract MockBridge {
     function bridgeIn(address token, uint256 amount, address recipient, uint256 sourceChainId) external {
         emit BridgeIn(token, amount, recipient, sourceChainId);
     }
+    
+    // Allow the contract to receive ETH
+    receive() external payable {
+        // Accept ETH
+    }
 }

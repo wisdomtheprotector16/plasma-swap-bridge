@@ -45,15 +45,6 @@ interface IPriceOracle {
     function isStale(address token) external view returns (bool);
 }
 
-interface ILiquidityPool {
-    function getVirtualPrice() external view returns (uint256);
-    function calculateSwap(uint8 tokenIndexFrom, uint8 tokenIndexTo, uint256 dx) external view returns (uint256);
-    function swap(uint8 tokenIndexFrom, uint8 tokenIndexTo, uint256 dx, uint256 minDy, uint256 deadline) external returns (uint256);
-    function addLiquidity(uint256[] calldata amounts, uint256 minToMint, uint256 deadline) external returns (uint256);
-    function removeLiquidity(uint256 amount, uint256[] calldata minAmounts, uint256 deadline) external returns (uint256[] memory);
-    function getTokenBalance(uint8 index) external view returns (uint256);
-    function getTokenIndex(address token) external view returns (uint8);
-}
 
 contract PlasmaStableSwap is 
     Initializable, 
@@ -78,7 +69,6 @@ contract PlasmaStableSwap is
     address public priceOracle;
     address public guardian;
     address public relayer;
-    address public liquidityPool;
     
     // Fee structure
     uint256 public swapFee; // Base swap fee in basis points
@@ -98,8 +88,7 @@ contract PlasmaStableSwap is
     mapping(address => uint256) public dailyVolumeCap;
     mapping(bytes32 => bool) public usedCommitments;
     
-    // Pool state
-    uint256 public totalSupply;
+    // Token reserves for swapping
     mapping(address => uint256) public balances;
     uint256 public A; // Amplification coefficient
     uint256 public futureA;
@@ -122,21 +111,6 @@ contract PlasmaStableSwap is
         uint256 timestamp
     );
     
-    event LiquidityAdded(
-        address indexed provider,
-        uint256[] amounts,
-        uint256 fee,
-        uint256 tokensMinted,
-        uint256 timestamp
-    );
-    
-    event LiquidityRemoved(
-        address indexed provider,
-        uint256[] amounts,
-        uint256 fee,
-        uint256 tokensBurned,
-        uint256 timestamp
-    );
     
     event TokenAdded(address indexed token, uint8 index);
     event TokenRemoved(address indexed token, uint8 index);
@@ -186,14 +160,12 @@ contract PlasmaStableSwap is
      * @param _priceOracle Address of price oracle
      * @param _guardian Address of emergency guardian
      * @param _relayer Address of authorized relayer
-     * @param _liquidityPool Address of liquidity pool
      */
     function initialize(
         address _plasmaPaymaster,
         address _priceOracle,
         address _guardian,
-        address _relayer,
-        address _liquidityPool
+        address _relayer
     ) public initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
@@ -207,7 +179,6 @@ contract PlasmaStableSwap is
         priceOracle = _priceOracle;
         guardian = _guardian;
         relayer = _relayer;
-        liquidityPool = _liquidityPool;
         
         swapFee = 30; // 0.30% default fee
         adminFee = 5000; // 50% of swap fee goes to admin
@@ -217,15 +188,6 @@ contract PlasmaStableSwap is
         
         A = 200 * A_PRECISION; // Initial amplification coefficient
         futureA = A;
-    }
-    
-    /**
-     * @dev Set liquidity pool address (only owner)
-     * @param _liquidityPool New liquidity pool address
-     */
-    function setLiquidityPool(address _liquidityPool) external onlyOwner {
-        require(_liquidityPool != address(0), "PS: Invalid liquidity pool");
-        liquidityPool = _liquidityPool;
     }
     
     /**
@@ -279,6 +241,19 @@ contract PlasmaStableSwap is
     }
     
     /**
+     * @dev Seed initial liquidity for swap functionality (owner only)
+     * @param token Token address
+     * @param amount Amount to seed
+     */
+    function seedLiquidity(address token, uint256 amount) external onlyOwner {
+        require(supportedTokens[token], "PS: Token not supported");
+        require(amount > 0, "PS: Invalid amount");
+        
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        balances[token] += amount;
+    }
+    
+    /**
      * @dev Execute a token swap with slippage protection
      * @param fromToken Address of input token
      * @param toToken Address of output token
@@ -311,7 +286,6 @@ contract PlasmaStableSwap is
         
         // Check daily volume limits (skip if no cap set)
         if (dailyVolumeCap[msg.sender] > 0) {
-            uint256 currentDay = block.timestamp / 86400;
             require(
                 userDailyVolume[msg.sender] + amount <= dailyVolumeCap[msg.sender],
                 "PS: Daily volume exceeded"
@@ -365,116 +339,7 @@ contract PlasmaStableSwap is
     }
     
     /**
-     * @dev Add liquidity to the pool
-     * @param amounts Array of token amounts to add
-     * @param minToMint Minimum LP tokens to mint
-     * @param deadline Transaction deadline
-     * @return mintAmount Amount of LP tokens minted
-     */
-    function addLiquidity(
-        uint256[] calldata amounts,
-        uint256 minToMint,
-        uint256 deadline
-    ) 
-        external 
-        nonReentrant 
-        whenNotPaused 
-        notEmergency
-        deadlineCheck(deadline)
-        returns (uint256 mintAmount)
-    {
-        require(amounts.length == tokens.length, "PS: Invalid amounts length");
-        
-        uint256 totalValue = 0;
-        uint256[] memory fees = new uint256[](tokens.length);
-        
-        for (uint i = 0; i < tokens.length; i++) {
-            if (amounts[i] > 0) {
-                require(supportedTokens[tokens[i]], "PS: Token not supported");
-                
-                // Calculate fee
-                fees[i] = (amounts[i] * swapFee) / FEE_DENOMINATOR;
-                uint256 netAmount = amounts[i] - fees[i];
-                
-                // Transfer tokens
-                IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), amounts[i]);
-                
-                // Update balance
-                balances[tokens[i]] += netAmount;
-                
-                // Calculate USD value
-                uint256 price = IPriceOracle(priceOracle).getPrice(tokens[i]);
-                totalValue += (netAmount * price) / 1e18;
-            }
-        }
-        
-        // Calculate LP tokens to mint
-        if (totalSupply == 0) {
-            mintAmount = totalValue;
-        } else {
-            mintAmount = (totalValue * totalSupply) / getTotalPoolValue();
-        }
-        
-        require(mintAmount >= minToMint, "PS: Insufficient mint amount");
-        
-        totalSupply += mintAmount;
-        balances[msg.sender] += mintAmount;
-        
-        emit LiquidityAdded(msg.sender, amounts, swapFee, mintAmount, block.timestamp);
-        
-        return mintAmount;
-    }
-    
-    /**
-     * @dev Remove liquidity from the pool
-     * @param amount Amount of LP tokens to burn
-     * @param minAmounts Minimum amounts of each token to receive
-     * @param deadline Transaction deadline
-     * @return amounts Array of token amounts received
-     */
-    function removeLiquidity(
-        uint256 amount,
-        uint256[] calldata minAmounts,
-        uint256 deadline
-    ) 
-        external 
-        nonReentrant 
-        whenNotPaused
-        deadlineCheck(deadline)
-        returns (uint256[] memory amounts)
-    {
-        require(amount > 0, "PS: Invalid amount");
-        require(balances[msg.sender] >= amount, "PS: Insufficient balance");
-        require(minAmounts.length == tokens.length, "PS: Invalid min amounts length");
-        
-        amounts = new uint256[](tokens.length);
-        uint256 totalValue = getTotalPoolValue();
-        uint256 share = (amount * 1e18) / totalSupply;
-        
-        for (uint i = 0; i < tokens.length; i++) {
-            if (balances[tokens[i]] > 0) {
-                amounts[i] = (balances[tokens[i]] * share) / 1e18;
-                require(amounts[i] >= minAmounts[i], "PS: Insufficient output amount");
-                
-                // Update balance
-                balances[tokens[i]] -= amounts[i];
-                
-                // Transfer tokens
-                IERC20(tokens[i]).safeTransfer(msg.sender, amounts[i]);
-            }
-        }
-        
-        // Update LP token supply
-        totalSupply -= amount;
-        balances[msg.sender] -= amount;
-        
-        emit LiquidityRemoved(msg.sender, amounts, swapFee, amount, block.timestamp);
-        
-        return amounts;
-    }
-    
-    /**
-     * @dev Calculate swap output amount using StableSwap algorithm
+     * @dev Calculate swap output amount using simple oracle-based pricing
      * @param fromIndex Index of input token
      * @param toIndex Index of output token
      * @param amount Input amount
@@ -486,70 +351,60 @@ contract PlasmaStableSwap is
         uint256 amount
     ) public view returns (uint256) {
         require(fromIndex < tokens.length && toIndex < tokens.length, "PS: Invalid token index");
+        require(amount > 0, "PS: Invalid amount");
         
-        if (liquidityPool != address(0)) {
-            return ILiquidityPool(liquidityPool).calculateSwap(fromIndex, toIndex, amount);
+        address fromToken = tokens[fromIndex];
+        address toToken = tokens[toIndex];
+        
+        // Get prices from oracle
+        uint256 fromPrice = IPriceOracle(priceOracle).getPrice(fromToken);
+        uint256 toPrice = IPriceOracle(priceOracle).getPrice(toToken);
+        
+        require(fromPrice > 0 && toPrice > 0, "PS: Invalid prices");
+        
+        // Simple price conversion with decimal adjustment
+        uint256 baseOutput = (amount * fromPrice) / toPrice;
+        
+        // Adjust for token decimal differences
+        uint256 fromDecimals = 18; // Normalize to 18 decimals
+        uint256 toDecimals = 18;
+        
+        // Get actual decimals from token metadata if available
+        try IERC20Metadata(fromToken).decimals() returns (uint8 decimals) {
+            fromDecimals = decimals;
+        } catch {}
+        
+        try IERC20Metadata(toToken).decimals() returns (uint8 decimals) {
+            toDecimals = decimals;
+        } catch {}
+        
+        // Apply decimal conversion
+        if (fromDecimals > toDecimals) {
+            baseOutput = baseOutput / (10 ** (fromDecimals - toDecimals));
+        } else if (toDecimals > fromDecimals) {
+            baseOutput = baseOutput * (10 ** (toDecimals - fromDecimals));
         }
         
-        // Fallback to simple calculation
-        uint256 fromPrice = IPriceOracle(priceOracle).getPrice(tokens[fromIndex]);
-        uint256 toPrice = IPriceOracle(priceOracle).getPrice(tokens[toIndex]);
+        // Apply stablecoin optimization - tighter spreads for stablecoin pairs
+        if (isStablecoin[fromToken] && isStablecoin[toToken]) {
+            // For stablecoin-to-stablecoin, use near 1:1 ratio with minimal slippage
+            baseOutput = amount * (10 ** toDecimals) / (10 ** fromDecimals);
+        }
         
-        return (amount * fromPrice) / toPrice;
+        return baseOutput;
     }
     
     /**
-     * @dev Calculate dynamic fee based on pool imbalance
-     * @param fromToken Input token
-     * @param toToken Output token
-     * @param amount Input amount
+     * @dev Calculate dynamic fee - simplified implementation returns fixed fee
      * @return Dynamic fee in basis points
      */
     function calculateDynamicFee(
-        address fromToken,
-        address toToken,
-        uint256 amount
+        address /* fromToken */,
+        address /* toToken */,
+        uint256 /* amount */
     ) public view returns (uint256) {
-        uint256 fromBalance = balances[fromToken];
-        uint256 toBalance = balances[toToken];
-        
-        // Calculate imbalance ratio
-        uint256 totalValue = getTotalPoolValue();
-        
-        // Avoid division by zero
-        if (totalValue == 0) {
-            return swapFee; // Return base fee if no liquidity
-        }
-        
-        uint256 fromRatio = (fromBalance * 1e18) / totalValue;
-        uint256 toRatio = (toBalance * 1e18) / totalValue;
-        
-        // Increase fee if pool becomes imbalanced
-        uint256 imbalanceMultiplier = 1e18;
-        if (fromRatio > 5e17) { // If token > 50% of pool
-            imbalanceMultiplier = 2e18; // Double the fee
-        } else if (toRatio < 1e17) { // If target token < 10% of pool
-            imbalanceMultiplier = 15e17; // 1.5x fee
-        }
-        
-        return (swapFee * imbalanceMultiplier) / 1e18;
-    }
-    
-    /**
-     * @dev Get total pool value in USD
-     * @return Total value in USD (18 decimals)
-     */
-    function getTotalPoolValue() public view returns (uint256) {
-        uint256 totalValue = 0;
-        
-        for (uint i = 0; i < tokens.length; i++) {
-            if (balances[tokens[i]] > 0) {
-                uint256 price = IPriceOracle(priceOracle).getPrice(tokens[i]);
-                totalValue += (balances[tokens[i]] * price) / 1e18;
-            }
-        }
-        
-        return totalValue;
+        // Simple fixed fee for swap-only implementation
+        return swapFee;
     }
     
     /**
@@ -674,12 +529,29 @@ contract PlasmaStableSwap is
     }
     
     /**
-     * @dev Get user's liquidity balance
-     * @param user User address
-     * @return User's LP token balance
+     * @dev Get total pool value in USD
+     * @return Total value in USD (18 decimals)
      */
-    function getUserLiquidityBalance(address user) external view returns (uint256) {
-        return balances[user];
+    function getTotalPoolValue() public view returns (uint256) {
+        uint256 totalValue = 0;
+        
+        for (uint i = 0; i < tokens.length; i++) {
+            if (balances[tokens[i]] > 0) {
+                uint256 price = IPriceOracle(priceOracle).getPrice(tokens[i]);
+                totalValue += (balances[tokens[i]] * price) / 1e18;
+            }
+        }
+        
+        return totalValue;
+    }
+    
+    /**
+     * @dev Get token balance for a specific token
+     * @param token Token address
+     * @return Token balance in the contract
+     */
+    function getTokenBalance(address token) external view returns (uint256) {
+        return balances[token];
     }
     
     /**

@@ -56,8 +56,7 @@ const helpers = {
       paymaster.address,
       oracle.address,
       guardian.address,
-      relayer.address,
-      liquidityPool.address
+      relayer.address
     ], {
       initializer: "initialize",
     });
@@ -158,6 +157,13 @@ const helpers = {
     tokens.wbtcPriceFeed3 = wbtcPriceFeed3;
     tokens.wethPriceFeed2 = wethPriceFeed2;
     tokens.wethPriceFeed3 = wethPriceFeed3;
+    
+    // Update initial prices to make tokens active
+    await oracle.updatePrice(tokens.usdt.address);
+    await oracle.updatePrice(tokens.usdc.address);
+    await oracle.updatePrice(tokens.dai.address);
+    await oracle.updatePrice(tokens.wbtc.address);
+    await oracle.updatePrice(tokens.weth.address);
   },
   
   // Setup tokens in stable swap
@@ -168,6 +174,54 @@ const helpers = {
     await stableSwap.addSupportedToken(tokens.wbtc.address, false);
     await stableSwap.addSupportedToken(tokens.weth.address, false);
     await stableSwap.setUSDTAddress(tokens.usdt.address);
+  },
+  
+  // Setup liquidity in stable swap contract
+  async setupStableSwapLiquidity(stableSwap, tokens, accounts) {
+    // Seed initial liquidity for each token
+    const liquidityAmounts = {
+      usdt: ethers.utils.parseUnits("10000", 6),
+      usdc: ethers.utils.parseUnits("10000", 6),
+      dai: ethers.utils.parseEther("10000"),
+      wbtc: ethers.utils.parseUnits("1", 8),
+      weth: ethers.utils.parseEther("10")
+    };
+    
+    // First approve tokens for stable swap
+    for (const [tokenName, amount] of Object.entries(liquidityAmounts)) {
+      await tokens[tokenName].connect(accounts.owner).approve(stableSwap.address, amount);
+      await stableSwap.seedLiquidity(tokens[tokenName].address, amount);
+    }
+  },
+  
+  // Complete setup function that sets up everything for testing
+  async completeSetup() {
+    const { contracts, accounts } = await this.deployAllContracts();
+    
+    // Setup oracle with tokens and prices
+    await this.setupOracle(contracts.oracle, contracts);
+    
+    // Setup stable swap with tokens
+    await this.setupStableSwap(contracts.stableSwap, contracts);
+    
+    // Setup bridge handler
+    await this.setupBridgeHandler(contracts.bridgeHandler, contracts);
+    
+    // Mint tokens to accounts
+    await this.mintTokens(contracts, accounts);
+    
+    // Setup liquidity in stable swap
+    await this.setupStableSwapLiquidity(contracts.stableSwap, contracts, accounts);
+    
+    // Approve tokens for users
+    await this.approveTokens(contracts, accounts.user1, contracts.stableSwap.address);
+    await this.approveTokens(contracts, accounts.user1, contracts.bridgeHandler.address);
+    await this.approveTokens(contracts, accounts.user2, contracts.stableSwap.address);
+    await this.approveTokens(contracts, accounts.user2, contracts.bridgeHandler.address);
+    await this.approveTokens(contracts, accounts.user3, contracts.stableSwap.address);
+    await this.approveTokens(contracts, accounts.user3, contracts.bridgeHandler.address);
+    
+    return { contracts, accounts };
   },
   
   // Setup tokens in bridge handler
@@ -182,6 +236,13 @@ const helpers = {
     await bridgeHandler.setSupportedChain(1, true); // Ethereum
     await bridgeHandler.setSupportedChain(56, true); // BSC
     await bridgeHandler.setSupportedChain(137, true); // Polygon
+    
+    // Set token limits to enable bridging
+    await bridgeHandler.setTokenLimits(tokens.usdt.address, ethers.utils.parseUnits("1", 6), ethers.utils.parseUnits("100000", 6));
+    await bridgeHandler.setTokenLimits(tokens.usdc.address, ethers.utils.parseUnits("1", 6), ethers.utils.parseUnits("100000", 6));
+    await bridgeHandler.setTokenLimits(tokens.dai.address, ethers.utils.parseEther("1"), ethers.utils.parseEther("100000"));
+    await bridgeHandler.setTokenLimits(tokens.wbtc.address, ethers.utils.parseUnits("0.0001", 8), ethers.utils.parseUnits("10", 8));
+    await bridgeHandler.setTokenLimits(tokens.weth.address, ethers.utils.parseUnits("0.001", 18), ethers.utils.parseEther("1000"));
   },
   
   // Mint tokens to users
@@ -302,4 +363,8 @@ const helpers = {
   }
 };
 
-module.exports = helpers;
+module.exports = {
+  ...helpers,
+  setupStableSwapLiquidity: helpers.setupStableSwapLiquidity,
+  completeSetup: helpers.completeSetup
+};
