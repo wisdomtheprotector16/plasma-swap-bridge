@@ -13,6 +13,7 @@ interface ButtonProps {
   className?: string;
   onClick?: () => void;
   children?: React.ReactNode;
+  fullWidth?: boolean; // New prop for full width
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -26,6 +27,7 @@ const Button: React.FC<ButtonProps> = ({
   className,
   onClick,
   children,
+  fullWidth = false, // Default to false for backward compatibility
   ...props
 }) => {
   // Size configurations
@@ -36,7 +38,8 @@ const Button: React.FC<ButtonProps> = ({
   };
 
   const currentSize = sizeConfig[size];
-  const buttonWidth = width || currentSize.width;
+  // Use 100% width if fullWidth is true, otherwise use provided width or size default
+  const buttonWidth = fullWidth ? "100%" : (width || currentSize.width);
   const buttonHeight = height || currentSize.height;
 
   return (
@@ -47,6 +50,7 @@ const Button: React.FC<ButtonProps> = ({
       $height={buttonHeight}
       $fontSize={currentSize.fontSize}
       $padding={currentSize.padding}
+      $fullWidth={fullWidth}
     >
       <button
         className={`button ${className || ""}`}
@@ -76,8 +80,10 @@ const StyledWrapper = styled.div<{
   $height: string;
   $fontSize: string;
   $padding: string;
+  $fullWidth: boolean;
 }>`
   position: relative;
+  width: ${props => props.$fullWidth ? "100%" : "auto"};
   
   &::before {
     content: "";

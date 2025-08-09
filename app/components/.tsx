@@ -250,7 +250,7 @@ export default function SwapInterface() {
                 ) : (
                   <div className="w-full">
                     <WrappedCustomConnectButton
-                      className="bg-gradient-to-r from-[#7CB342] to-green-600 hover:from-green-700 hover:to-green-600 rounded-full shadow-lg"
+                      className="bg-gradient-to-r from-green-600 to-green-800 hover:from-green-600 hover:to-green-600 rounded-full shadow-lg"
                       showWalletIcon={false}
                     >
                       

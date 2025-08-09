@@ -1,10 +1,12 @@
 "use client";
 import React, { useState } from "react";
 import { Settings, ArrowUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
+import Button from "@/components/fancybutton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
+import { useAccount } from "wagmi";
 import {
   Select,
   SelectContent,
@@ -14,7 +16,8 @@ import {
 } from "@/components/ui/select";
 
 import { AnimateInView, useAnimationVariants } from "@/components/Animation";
-import { Text } from "@/components/text";
+import { Text } from "@/components/Text";
+import WrappedCustomConnectButton from "@/components/CustomConnectButton";
 
 interface Token {
   symbol: string;
@@ -55,23 +58,6 @@ const SwapSection: React.FC<SwapSectionProps> = ({
 
   return (
     <AnimateInView animation="slideUp" className="space-y-2">
-      {/* <div className="flex justify-between items-center">
-        <span className="text-sm font-medium text-gray-700">{label}</span>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <span>Balance: {balance}</span>
-          {showMax && balance > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-auto p-0 text-blue-500 hover:text-blue-600"
-              onClick={() => onAmountChange(balance.toString())}
-            >
-              Max
-            </Button>
-          )}
-        </div>
-      </div> */}
-
       <div className="bg-gray-100 border border-neutral-200 rounded-sm p-4 space-y-3">
         <div className="flex justify-between items-center">
           <Select value={selectedToken} onValueChange={onTokenChange}>
@@ -122,6 +108,8 @@ export default function SwapInterface() {
   const [sellToken, setSellToken] = useState("USDC");
   const [buyToken, setBuyToken] = useState("USDT");
 
+  const { address, isConnected } = useAccount();
+
   // Example of using the hook (alternative approach)
   const animations = useAnimationVariants();
 
@@ -153,7 +141,7 @@ export default function SwapInterface() {
   };
 
   return (
-    <div className="flex justify-center p-4">
+    <div className="flex justify-center">
       <div className="w-full max-w-[800px]">
         {/* Using AnimateInView Component (Recommended) */}
         <AnimateInView animation="slideDown" duration={0.6}>
@@ -163,7 +151,7 @@ export default function SwapInterface() {
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h2 className="text-xl font-semibold text-start text-gray-900">
-                    Swap
+                    Bridge
                   </h2>
                   <Text
                     as="p"
@@ -171,13 +159,13 @@ export default function SwapInterface() {
                     size="xs"
                     className=" max-w-2xl mx-auto"
                   >
-                    Swap tokens instantly with low fees and zero hassle right
+                    Bridge tokens instantly with low fees and zero hassle right
                     from your wallet.
                   </Text>
                 </div>
               </div>
 
-              <div className=" relative">
+              <div className="relative">
                 {/* Sell Section */}
                 <SwapSection
                   label="Sell"
@@ -190,16 +178,18 @@ export default function SwapInterface() {
                   showMax={true}
                 />
 
-                {/* Swap Button - Fixed at center */}
+                {/* Bridge Button - Fixed at center */}
                 <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-                  <Button
+                  <div
                     onClick={handleSwap}
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full w-10 h-10 p-0 border-gray-200 hover:bg-gray-50 bg-white shadow-md"
+                    className="cursor-pointer hover:scale-110 transition-transform duration-200"
                   >
-                    <ArrowUpDown className="w-4 h-4 text-gray-600" />
-                  </Button>
+                    <img
+                      src="/icons/exchange.svg"
+                      className="h-10 w-10"
+                      alt="Bridge tokens"
+                    />
+                  </div>
                 </div>
                 <div className="mt-4" />
 
@@ -223,17 +213,17 @@ export default function SwapInterface() {
                   className="flex justify-between items-center text-sm text-gray-500 pt-2"
                 >
                   <span>{getExchangeRate()}</span>
-                  <Button
+                  <div
                     variant="ghost"
                     size="sm"
                     className="h-auto p-0 text-gray-400"
                   >
                     <span className="text-xs">⚙️</span>
-                  </Button>
+                  </div>
                 </motion.div>
 
                 {/* Progress Bar */}
-                <AnimateInView
+                {/* <AnimateInView
                   animation="fadeIn"
                   delay={0.4}
                   viewport={{ once: true, margin: "-20px 0px -20px 0px" }}
@@ -243,7 +233,149 @@ export default function SwapInterface() {
                       <div className="bg-blue-500 h-1 rounded-full w-0"></div>
                     </div>
                   </div>
-                </AnimateInView>
+                </AnimateInView> */}
+              </div>
+
+              {/* Full Width Wallet Connection Button */}
+              <div className="mt-6">
+                {isConnected ? (
+                  <Button
+                    fullWidth
+                    className="w-full h-12 text-white bg-green-600 hover:bg-green-700 font-medium text-base"
+                    disabled
+                  >
+                    ✓ Wallet Connected ({address?.slice(0, 6)}...
+                    {address?.slice(-4)})
+                  </Button>
+                ) : (
+                  <div className="w-full">
+                    <WrappedCustomConnectButton
+                      className="bg-gradient-to-r from-green-600 to-green-800 hover:from-green-600 hover:to-green-600 rounded-full shadow-lg"
+                      showWalletIcon={false}
+                    >
+                      
+                      <span> Connect Wallet</span>
+                    </WrappedCustomConnectButton>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </AnimateInView>
+        <AnimateInView animation="slideDown" duration={0.6}>
+          <Card className="w-full max-w-[800px] mx-auto bg-white shadow-lg">
+            <CardContent className="p-6">
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-start text-gray-900">
+                    Bridge
+                  </h2>
+                  <Text
+                    as="p"
+                    variant="muted"
+                    size="xs"
+                    className=" max-w-2xl mx-auto"
+                  >
+                    Bridge tokens instantly with low fees and zero hassle right
+                    from your wallet.
+                  </Text>
+                </div>
+              </div>
+
+              <div className="relative">
+                {/* Sell Section */}
+                <SwapSection
+                  label="Sell"
+                  amount={sellAmount}
+                  onAmountChange={setSellAmount}
+                  selectedToken={sellToken}
+                  onTokenChange={setSellToken}
+                  tokens={tokens}
+                  balance={getSellBalance()}
+                  showMax={true}
+                />
+
+                {/* Bridge Button - Fixed at center */}
+                <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+                  <div
+                    onClick={handleSwap}
+                    className="cursor-pointer hover:scale-110 transition-transform duration-200"
+                  >
+                    <img
+                      src="/icons/exchange.svg"
+                      className="h-10 w-10"
+                      alt="Bridge tokens"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4" />
+
+                {/* Buy Section */}
+                <SwapSection
+                  label="Buy"
+                  amount={buyAmount}
+                  onAmountChange={setBuyAmount}
+                  selectedToken={buyToken}
+                  onTokenChange={setBuyToken}
+                  tokens={tokens}
+                  balance={getBuyBalance()}
+                />
+              </div>
+
+              {/* Exchange Rate - Using hook approach */}
+              <div>
+                <motion.div
+                  {...animations.fadeIn}
+                  transition={{ ...animations.fadeIn.transition, delay: 0.3 }}
+                  className="flex justify-between items-center text-sm text-gray-500 pt-2"
+                >
+                  <span>{getExchangeRate()}</span>
+                  <div
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 text-gray-400"
+                  >
+                    <span className="text-xs">⚙️</span>
+                  </div>
+                </motion.div>
+
+                {/* Progress Bar */}
+                {/* <AnimateInView
+                  animation="fadeIn"
+                  delay={0.4}
+                  viewport={{ once: true, margin: "-20px 0px -20px 0px" }}
+                >
+                  <div className="mt-6">
+                    <div className="w-full bg-gray-200 rounded-full h-1">
+                      <div className="bg-blue-500 h-1 rounded-full w-0"></div>
+                    </div>
+                  </div>
+                </AnimateInView> */}
+              </div>
+
+              {/* Full Width Wallet Connection Button */}
+              <div className="mt-6">
+                {isConnected ? (
+                  <Button
+                    fullWidth
+                    className="w-full h-12 text-white bg-green-600 hover:bg-green-700 font-medium text-base"
+                    disabled
+                  >
+                    ✓ Wallet Connected ({address?.slice(0, 6)}...
+                    {address?.slice(-4)})
+                  </Button>
+                ) : (
+                  <div className="w-full">
+                    <WrappedCustomConnectButton
+                      className="bg-gradient-to-r from-green-600 to-green-800 hover:from-green-600 hover:to-green-600 rounded-full shadow-lg"
+                      showWalletIcon={false}
+                    >
+                      
+                      <span> Connect Wallet</span>
+                    </WrappedCustomConnectButton>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

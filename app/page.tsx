@@ -66,22 +66,22 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center max-w-3xl mx-auto mb-12"
+          className="text-center max-w-3xl mx-auto mb-12 p-2 md:p-4"
         >
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-            Move Freely, Flow Securely
+            Powering the Future of Cross-Chain Finance
           </h1>
-          <p className="text-md md:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+          {/* <p className="text-md md:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
             Swap, bridge, and manage assets across chains, fast, gas efficient,
             and built for DeFi's future.
-          </p>
+          </p> */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg">
-              Launch App
+            <Button size="md">
+              Get Started
               <span className="ml-2">
                 {" "}
                 {/* Add margin-left */}
-                <img className="size-4" src="/icons/export.svg" alt="" />
+                <img className="size-4" src="/icons/export-dark.svg" alt="" />
               </span>
             </Button>
           </div>
@@ -102,6 +102,31 @@ export default function LandingPage() {
         <HowItWorks />
 
         <FAQ />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center max-w-3xl mx-auto mb-12 p-2 md:p-4"
+        >
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+            Move Freely, Flow Securely
+          </h1>
+          <p className="text-md md:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Swap, bridge, and manage assets across chains, fast, gas efficient,
+            and built for DeFi's future.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg">
+              Launch App
+              <span className="ml-2">
+                {" "}
+                {/* Add margin-left */}
+                <img className="size-4" src="/icons/export-dark.svg" alt="" />
+              </span>
+            </Button>
+          </div>
+        </motion.div>
+
         <CommunitySection />
 
         <Footer />

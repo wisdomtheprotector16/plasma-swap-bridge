@@ -39,8 +39,8 @@ export default function SwapInterface() {
     setBuyAmount(tempAmount);
   };
 
-  const getSellTokenData = () => tokens.find(t => t.symbol === sellToken);
-  const getBuyTokenData = () => tokens.find(t => t.symbol === buyToken);
+  const getSellTokenData = () => tokens.find((t) => t.symbol === sellToken);
+  const getBuyTokenData = () => tokens.find((t) => t.symbol === buyToken);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -55,10 +55,11 @@ export default function SwapInterface() {
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Swap tokens instantly with low fees and zero hassle right from your wallet.
+                Swap tokens instantly with low fees and zero hassle right from
+                your wallet.
               </p>
             </CardHeader>
-            
+
             <CardContent className="space-y-4">
               {/* Sell Section */}
               <div className="space-y-2">
@@ -73,7 +74,7 @@ export default function SwapInterface() {
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div className="relative bg-gray-50 rounded-lg border p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -98,7 +99,7 @@ export default function SwapInterface() {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="text-right">
                       <Input
                         type="number"
@@ -123,7 +124,12 @@ export default function SwapInterface() {
                   onClick={handleSwapTokens}
                   className="h-10 w-10 rounded-full border bg-white shadow-sm hover:bg-gray-50"
                 >
-                  <ArrowUpDown className="h-4 w-4" />
+                  <img
+                    src="/public/icons/exchange.svg"
+                    className="h-4 w-4"
+                    alt=""
+                  />
+                  {/* <ArrowUpDown className="h-4 w-4" /> */}
                 </Button>
               </div>
 
@@ -133,7 +139,7 @@ export default function SwapInterface() {
                   <span className="text-muted-foreground">Buy</span>
                   <div className="text-muted-foreground">≈ 0</div>
                 </div>
-                
+
                 <div className="relative bg-gray-50 rounded-lg border p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -158,7 +164,7 @@ export default function SwapInterface() {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="text-right">
                       <Input
                         type="number"
@@ -186,7 +192,9 @@ export default function SwapInterface() {
 
               {/* Slippage Settings */}
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Slippage tolerance</span>
+                <span className="text-muted-foreground">
+                  Slippage tolerance
+                </span>
                 <div className="flex items-center gap-1">
                   {slippageOptions.map((option) => (
                     <Button

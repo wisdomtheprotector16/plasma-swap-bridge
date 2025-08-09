@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import SwapInterface from "../../components/SwapModal";
 import { TrueFlowHeaderRedirect, TrueFlowHeaderRiderect } from "@/app/components/Header";
+import BridgeInterface from "@/app/components/BridgeModal";
 
 const tokens = [
   { symbol: "USDC", name: "USD Coin", balance: "0", price: "$1.00" },
@@ -65,11 +66,12 @@ function ListItem({ className, title, children, icon: Icon, ...props }) {
 
 export default function TrueFlowApp() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       <TrueFlowHeaderRedirect/>
       <main className="py-8">
         <div className="container mx-auto px-4">
-          <SwapInterface />
+          {/* <SwapInterface /> */}
+          <BridgeInterface/>
         </div>
       </main>
     </div>

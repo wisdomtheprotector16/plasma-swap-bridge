@@ -13,6 +13,8 @@ const nextConfig = {
 
 
 
+
+
 // module.exports = {
 //   // Allow WebSocket connections (HMR) via ngrok
 //   webpackDevMiddleware: (config) => {

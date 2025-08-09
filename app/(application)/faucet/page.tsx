@@ -66,7 +66,7 @@ export default function FaucetComponent() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 ">
+    <main className="min-h-screen  ">
       <TrueFlowHeaderRedirect />
       <div className="flex items-center justify-center p-4">
         <div className="w-full max-w-md ">
@@ -302,17 +302,7 @@ export default function FaucetComponent() {
           </Card>
 
           {/* Footer */}
-          <div className="text-center mt-8">
-            <div className="flex justify-center gap-4 mb-4">
-              <div className="w-6 h-6 bg-green-600 rounded"></div>
-              <div className="w-6 h-6 bg-blue-600 rounded"></div>
-              <div className="w-6 h-6 bg-gray-600 rounded"></div>
-              <div className="w-6 h-6 bg-orange-600 rounded"></div>
-            </div>
-            <p className="text-xs text-gray-500">
-              Copyright © 2025 by TrueFlow. All rights reserved.
-            </p>
-          </div>
+         
         </div>
       </div>
     </main>

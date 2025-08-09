@@ -33,13 +33,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"; 
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 import { navigationData, iconMap } from "./constant";
-import { Text } from "@/components/text";
+import { Text } from "@/components/Text";
 
 const tokens = [
   { symbol: "USDC", name: "USD Coin", balance: "0", price: "$1.00" },

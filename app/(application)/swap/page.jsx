@@ -6,14 +6,14 @@ import { TrueFlowHeaderRedirect } from "@/app/components/Header";
 
 export default function TrueFlowApp() {
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen">
       <TrueFlowHeaderRedirect/>
       <main className="py-8">
         <div className="container mx-auto px-4">
           <SwapInterface />
         </div>
       </main>
-      <BottomNavigation />
+      {/* <BottomNavigation /> */}
     </div>
   );
 }

@@ -4,8 +4,7 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 // import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Zap, BarChart, Users } from "lucide-react";
-import { Text } from "@/components/text";
+import { Text } from "@/components/Text";
 import Image from "next/image";
 import Button from "@/components/fancybutton";
 import Link from "next/link";
@@ -66,7 +65,8 @@ const Hero = () => {
     <div>
       <section className="w-full py-20 md:py-32 lg:py-40 overflow-hidden">
         <div className="container px-4 md:px-6 relative">
-          <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+          <div className="absolute inset-0 -z-10 h-full w-full   "></div>
+          {/* <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div> */}
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -87,11 +87,14 @@ const Hero = () => {
                 <Text
                   as="p"
                   variant="muted"
-                  size="xs"
+                  size="sm"
                   className=" max-w-2xl  flex items-center gap-1 "
                 >
-                  A seamless way to move your assets across chains, fast,
-                  secure, and gas efficient.
+                  <span>
+                    <img className="w-3 h-3" src="/icons/star.svg" alt="" />
+                  </span>
+                  A seamless way to move your assets <div className="hidden md:block">across chains, fast,
+                  secure, and gas efficient.</div>
                 </Text>
                 <span>
                   <img className="w-3 h-3" src="/icons/export.svg" alt="" />
@@ -139,7 +142,7 @@ const Hero = () => {
                         className={`size-4 transition-transform duration-300 ${
                           isNavigating ? "rotate-180" : ""
                         }`}
-                        src="/icons/export.svg"
+                        src="/icons/export-dark.svg"
                         alt=""
                       />
                     </span>

@@ -111,8 +111,7 @@ const Footer = () => {
           {/* Brand Section */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-green-500 rounded"></div>
-              <span className="text-xl font-bold">TrueFlow</span>
+              <TrueFlowLogoDark/>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
               TrueFlow makes routing your assets across chains as easy as a

@@ -78,7 +78,7 @@ const FAQ = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto ">
+    <div className="w-full max-w-7xl mx-auto ">
       <div className=" rounded-2xl p-2 md:p-4">
         {/* <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-8">
           Frequently Asked Questions
@@ -86,7 +86,7 @@ const FAQ = () => {
 
         <div className="space-y-4">
           <section id="faq" className="w-full">
-            <div className="container px-4 md:px-6">
+            <div className="container px-2 md:px-6">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -103,9 +103,9 @@ const FAQ = () => {
                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
                   Frequently Asked Questions
                 </h2>
-                <p className="max-w-[800px] text-muted-foreground md:text-lg">
+                {/* <p className="max-w-[800px] text-muted-foreground md:text-lg">
                   Find answers to common questions about our platform.
-                </p>
+                </p> */}
               </motion.div>
 
               <div className="mx-auto max-w-3xl">
@@ -120,7 +120,7 @@ const FAQ = () => {
                     >
                       <AccordionItem
                         value={`item-${i}`}
-                        className="border-b border-border/40 py-2 bg-slate-50 px-2 rounded-md"
+                        className="border-b border-border/40 py-2 bg-white px-4 md:px-8 rounded-md"
                       >
                         <AccordionTrigger className="text-left font-medium hover:no-underline">
                           {faq.question}

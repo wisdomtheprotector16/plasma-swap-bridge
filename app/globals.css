@@ -88,3 +88,117 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* For backround */
+/* Add this to your globals.css file */
+
+/* Add this to your globals.css file */
+
+.bg-pattern {
+  position: relative;
+  background-image: url("/circles.jpg");
+  background-repeat: repeat;
+  background-position: top left;
+  min-height: 100vh;
+
+  /* Mobile first approach - smallest size for mobile */
+  background-size: 1000px auto; /* auto maintains aspect ratio, no stretching */
+}
+
+/* Gray overlay on top of the pattern */
+.bg-pattern::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(160, 160, 160, 0.3); /* Subtle gray overlay - adjust opacity as needed */
+  pointer-events: none; /* Allows clicking through the overlay */
+  z-index: 0;
+}
+
+/* Ensure content appears above the overlay */
+.bg-pattern > * {
+  position: relative;
+  z-index: 1;
+  
+}
+
+
+/* Tablet and small desktop */
+@media (min-width: 768px) {
+  .bg-pattern {
+    background-size: 250px auto;
+  }
+}
+
+/* Medium desktop */
+@media (min-width: 1024px) {
+  .bg-pattern {
+    background-size: 300px auto;
+  }
+}
+
+/* Large desktop */
+@media (min-width: 1280px) {
+  .bg-pattern {
+    background-size: 400px auto;
+  }
+}
+
+/* Extra large screens */
+@media (min-width: 1536px) {
+  .bg-pattern {
+    background-size: 500px auto;
+  }
+}
+
+/* Alternative variations with different gray tones */
+.bg-pattern-light-gray::before {
+  background-color: rgba(200, 200, 200, 0.2); /* Lighter gray */
+}
+
+.bg-pattern-dark-gray::before {
+  background-color: rgba(64, 64, 64, 0.4); /* Darker gray */
+}
+
+.bg-pattern-warm-gray::before {
+  background-color: rgba(128, 120, 115, 0.3); /* Warm gray */
+}
+
+.bg-pattern-cool-gray::before {
+  background-color: rgba(115, 125, 140, 0.3); /* Cool gray */
+}
+
+/* Alternative: if you want the pattern to be fixed while scrolling */
+.bg-pattern-fixed {
+  background-image: url("/circles.jpg");
+  background-repeat: repeat;
+  background-size: 120px auto;
+  background-position: top left;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* For a more subtle pattern, you can adjust opacity with a pseudo-element */
+.bg-pattern-subtle {
+  position: relative;
+  min-height: 100vh;
+}
+
+.bg-pattern-subtle::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("/circles.jpg");
+  background-repeat: repeat;
+  background-size: 120px auto;
+  background-position: top left;
+  opacity: 0.3; /* Makes the pattern very subtle */
+  z-index: -1;
+  pointer-events: none;
+}
